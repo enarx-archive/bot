@@ -1,0 +1,16 @@
+name: scheduled-run
+
+on: push
+  # schedule:
+  #   - cron:  '*/15 * * * *'
+
+jobs:
+  scheduled-run:
+    runs-on: ubuntu-latest
+    container: quay.io/enarx/fedora
+    steps:
+    - uses: actions/checkout@v2
+    - name: scheduled-run
+      env:
+        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      run: scripts/exec $BOT_TOKEN "enarxbot-test-org"

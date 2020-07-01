@@ -1,0 +1,41 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: Apache-2.0
+
+import sys
+from github import Github
+
+# Get inputs from shell
+(token, organization_name) = sys.argv[1:4]
+
+# Fetch organization from bot repo, then get all organization repos
+organization = Github(token).get_organization(organization_name)
+org_repos = organization.get_repos()
+
+for repo in org_repos:
+    print(f"Organizing {repo.name}")
+
+    # Automatically merge PRs that meet criteria
+    prs = repo.get_pulls()
+    for pr in prs:
+        pr_reviews = pr.get_reviews()
+        
+        # Parse reviews for merge criteria.
+        changes_requested = 0
+        approving_reviews = 0
+        for review in pr_reviews:
+            if review.state == "APPROVED":
+                approving_reviews += 1
+            if review.state == "CHANGES_REQUESTED":
+                changes_requested += 1
+        
+        # If all merge criteria pass, merge the PR.
+        if pr.mergeable == True and approving_reviews >= 2 and changes_requested == 0:
+            print(f"Merging PR {pr.number} from {repo.name}")
+            pr.merge(merge_method="rebase")
+        
+        # If not, show what was missing.
+        else:
+            print(f"PR {pr.number} from {repo.name} didn't meet the criteria for merge:")
+            print(f"Mergeable: {pr.mergeable}")
+            print(f"Approving reviews: {approving_reviews} (must be at least 2)")
+            print(f"Changes requested review present: {changes_requested}")

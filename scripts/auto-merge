@@ -1,0 +1,27 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: Apache-2.0
+
+from github import Github
+import os
+
+# Initialize Github
+github = Github(os.environ['GITHUB_TOKEN'])
+
+# Print column keys.
+print(" Merged? | Repository + PR number | Mergeable? | State  ")
+
+for issue in github.search_issues("org:enarx state:open is:public is:pr review:approved"):
+    # Status strings.
+    merged_indicator = "✗"
+    pr_identifier = f"{issue.repository.name}#{issue.number}"
+
+    # `search_issues()` returns issues. Convert to PRs.
+    pr = issue.as_pull_request()
+    
+    # If all merge criteria pass, merge the PR.
+    if pr.mergeable and pr.mergeable_state == "clean":
+        merged_indicator = "✓"
+        pr.merge(merge_method="rebase")
+
+    # List the status of the pull request.
+    print(f" {merged_indicator:8}| {pr_identifier:23}| {str(pr.mergeable):11}| {pr.mergeable_state:7}")

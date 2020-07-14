@@ -1,0 +1,19 @@
+name: hourly
+
+on:
+  schedule:
+    - cron:  '58 * * * *'
+
+jobs:
+  hourly:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: dependencies
+      run: |
+        /usr/bin/python3 -m pip install --upgrade pip setuptools
+        /usr/bin/python3 -m pip install PyGithub
+    - name: triage
+      env:
+        GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
+      run: scripts/triage

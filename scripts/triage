@@ -8,7 +8,8 @@ org = github.get_organization('enarx')
 project = [p for p in org.get_projects(state='open') if p.name == 'Planning'][0]
 column = [c for c in project.get_columns() if c.name == 'Triage'][0]
 
-for issue in github.search_issues(f"org:enarx state:open is:public -project:enarx/{project.number}"):
-    content_id = issue.id if issue.pull_request is None else issue.as_pull_request().id
-    content_type = 'Issue' if issue.pull_request is None else 'PullRequest'
-    column.create_card(content_id=content_id, content_type=content_type)
+for issue in github.search_issues(f"org:enarx state:open is:public is:pr -project:enarx/{project.number}"):
+    column.create_card(content_id=issue.as_pull_request().id, content_type='PullRequest')
+
+for issue in github.search_issues(f"org:enarx state:open is:public is:issue -label:conference -project:enarx/{project.number}"):
+    column.create_card(content_id=issue.id, content_type='Issue')

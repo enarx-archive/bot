@@ -17,7 +17,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
       run: scripts/triage
-    - name: auto-merge
+    - name: merge
       env:
         GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
-      run: scripts/auto-merge
+      run: scripts/merge

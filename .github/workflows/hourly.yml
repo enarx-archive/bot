@@ -21,6 +21,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
       run: scripts/merge
+    - name: prstate
+      env:
+        GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
+      run: scripts/prstate
     - name: assigned
       env:
         GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}

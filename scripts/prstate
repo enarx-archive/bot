@@ -14,7 +14,7 @@ for issue in github.search_issues(f"org:enarx state:open is:public is:pr"):
     assignees = {a.login for a in pr.assignees}
 
     remove = reviewers - requested
-    needed = requested | ({pr.user.login} if remove else {})
+    needed = requested | ({pr.user.login} if remove else set())
 
     remove &= assignees
     needed -= assignees

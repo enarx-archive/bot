@@ -28,5 +28,3 @@ jobs:
       run: LD_PRELOAD=libnss_wrapper.so enarx-prstate
     - name: assigned
       run: LD_PRELOAD=libnss_wrapper.so enarx-assigned
-    - name: cache
-      run: find /var/lib/nginx/cache

@@ -8,4 +8,4 @@ RUN dnf -y install python3-pygithub
 COPY github.conf /etc/nginx/conf.d/github.conf
 COPY hosts.conf /etc/nginx/hosts.conf
 
-COPY enarx-* /usr/local/bin
+COPY enarx-* /usr/local/bin/

@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 # SPDX-License-Identifier: Apache-2.0
 
-import common
+from github import Github
+import os
 
-github = common.github()
+github = Github(os.environ['GITHUB_TOKEN'])
 
 def handle(issue, pr, responsible):
     assignees = {a.login for a in pr.assignees}

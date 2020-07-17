@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 # SPDX-License-Identifier: Apache-2.0
 
-from github import Github
-import os
+import common
 
-github = Github(os.environ['GITHUB_TOKEN'])
+github = common.github()
+
 org = github.get_organization('enarx')
 project = [p for p in org.get_projects(state='open') if p.name == 'Planning'][0]
 column = [c for c in project.get_columns() if c.name == 'Triage'][0]

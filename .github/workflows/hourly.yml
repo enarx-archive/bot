@@ -1,6 +1,7 @@
 name: hourly
 
 on:
+  workflow_dispatch:
   schedule:
     - cron:  '58 * * * *'
 
@@ -9,14 +10,23 @@ jobs:
     runs-on: ubuntu-latest
     container: quay.io/enarx/bot
     env:
+      NSS_WRAPPER_HOSTS: /etc/nginx/hosts.conf
       GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
     steps:
-    - uses: actions/checkout@v2
+    - name: certificate
+      run: |
+        openssl req -x509 -newkey rsa:4096 -keyout /etc/nginx/api.github.com.key -out /etc/nginx/api.github.com.crt -days 1 -subj '/CN=api.github.com' -addext "subjectAltName = DNS:api.github.com" -nodes
+        cp /etc/nginx/api.github.com.crt /etc/pki/ca-trust/source/anchors/
+        update-ca-trust
+    - name: nginx
+      run: nginx -c /etc/nginx/nginx.conf
     - name: triage
-      run: scripts/triage
+      run: LD_PRELOAD=libnss_wrapper.so enarx-triage
     - name: merge
-      run: scripts/merge
+      run: LD_PRELOAD=libnss_wrapper.so enarx-merge
     - name: prstate
-      run: scripts/prstate
+      run: LD_PRELOAD=libnss_wrapper.so enarx-prstate
     - name: assigned
-      run: scripts/assigned
+      run: LD_PRELOAD=libnss_wrapper.so enarx-assigned
+    - name: cache
+      run: find /var/lib/nginx/cache

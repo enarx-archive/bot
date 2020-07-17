@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 # SPDX-License-Identifier: Apache-2.0
 
-import common
+from github import Github
+import os
 
-github = common.github()
+github = Github(os.environ['GITHUB_TOKEN'])
 org = github.get_organization('enarx')
 
 project = {p.name: p for p in org.get_projects(state='open')}['Sprint']

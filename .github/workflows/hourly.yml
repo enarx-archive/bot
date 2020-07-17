@@ -10,11 +10,8 @@ jobs:
     container: quay.io/enarx/bot
     env:
       GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
-      PROXY_API_URL: http://localhost
     steps:
     - uses: actions/checkout@v2
-    - name: nginx
-      run: nginx -c /etc/nginx/nginx.conf -g 'pid /var/run/nginx.pid;'
     - name: triage
       run: scripts/triage
     - name: merge

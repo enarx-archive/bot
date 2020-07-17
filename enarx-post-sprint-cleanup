@@ -1,0 +1,30 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: Apache-2.0
+
+import enarxbot
+
+github = enarxbot.connect()
+org = github.get_organization('enarx')
+
+sprint = {p.name: p for p in org.get_projects(state='open')}['Sprint']
+sprint_columns = {c.name: c for c in sprint.get_columns()}
+planning = {p.name: p for p in org.get_projects(state='open')}['Planning']
+planning_columns = {c.name: c for c in planning.get_columns()}
+
+for assigned_card in sprint_columns['Assigned'].get_cards():
+    issue = assigned_card.get_content(content_type="Issue")
+    if issue is not None:
+        # If a valid issue, we want to move it to Nominated in Planning.
+        # First, check if a card for this issue already exists. If yes, move it
+        # instead of creating a new card.
+        for column in planning_columns:
+            for card in column.get_cards():
+                if card.get_content("Issue") is not None and card.get_content("Issue").id == issue.id:
+                    card.move(position="bottom", column=planning_columns['Nominated'])
+                    continue
+        # If the loop didn't find any matching cards, create a new one.
+        enarxbot.create_card(planning_columns['Nominated'], issue.id, "Issue")
+
+        # Once we're done moving/creating the cards, delete the one on the
+        # Sprint board.
+        assigned_card.delete()

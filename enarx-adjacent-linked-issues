@@ -1,0 +1,45 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: Apache-2.0
+
+
+import enarxbot
+import re
+
+github = enarxbot.connect()
+
+# Get the Enarx org.
+org = github.get_organization('enarx')
+
+# Get the Sprint board.
+sprint = {p.name: p for p in org.get_projects(state='open')}['Sprint']
+
+# Cache the Sprint board to avoid redundant network requests.
+sprint_cached = enarxbot.cache_boards([sprint])
+
+for issue in github.search_issues(f"org:enarx is:pr is:public is:open linked:issue -is:draft project:enarx/{sprint.number}"):
+    # Some attributes change when converting to PR; get them beforehand.
+    repo = issue.repository
+    (pr_project, pr_column, pr_card) = sprint_cached[issue.id]
+
+    # Convert to a PR.
+    pr = issue.as_pull_request()
+
+    # Get a list of related issues to the PR.
+    related = {repo.get_issue(i) for i in enarxbot.get_related_issues(pr)}
+
+    # Move every related issue adjacent to the PR in the sprint board.
+    for issue in related:
+        try:
+            (issue_project, issue_column, issue_card) = sprint_cached[issue.id]
+        except:
+            # If an exception, the issue isn't in the board. Add it directly.
+            print(f"Adding issue {repo.name}#{issue.number} adjacent to PR {repo.name}#{pr.number}")
+            issue_card = enarxbot.create_card(pr_column, issue.id, "Issue")
+            if issue_card is not None:
+                issue_card.move(f"after:{pr_card.id}", pr_column)
+            continue
+        
+        # Only move if the issue is in a different column to the PR.
+        if issue_column != pr_column:
+            print(f"Moving issue {repo.name}#{issue.number} adjacent to PR {repo.name}#{pr.number}")
+            issue_card.move(f"after:{pr_card.id}", pr_column)

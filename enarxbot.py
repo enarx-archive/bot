@@ -112,7 +112,7 @@ def graphql(query, page=None, **kwargs):
 
 def create_card(column, content_id, content_type):
     try:
-        column.create_card(content_id=content_id, content_type=content_type)
+        return column.create_card(content_id=content_id, content_type=content_type)
     except github.GithubException as e:
         error = e.data["errors"][0]
         if error["resource"] != "ProjectCard" or error["code"] != "unprocessable":
@@ -132,3 +132,15 @@ def get_related_issues(pr):
     for c in pr.get_commits():
         for verb, num in regex.findall(c.commit.message):
             yield int(num)
+
+# Takes a project as input and caches all cards in a dictionary for easy lookup
+# (and to avoid redundant network requests).
+def cache_boards(projects):
+    cache = {}
+    for project in projects:
+        for column in project.get_columns():
+            for card in column.get_cards():
+                content = card.get_content()
+                if content:
+                    cache.setdefault(content.id, []).append((project, column, card))
+    return cache

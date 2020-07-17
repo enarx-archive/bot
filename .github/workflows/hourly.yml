@@ -32,3 +32,5 @@ jobs:
       run: LD_PRELOAD=libnss_wrapper.so enarx-assigned
     - name: copy-labels-linked
       run: LD_PRELOAD=libnss_wrapper.so enarx-copy-labels-linked
+    - name: adjacent-linked-issues
+      run: LD_PRELOAD=libnss_wrapper.so enarx-adjacent-linked-issues

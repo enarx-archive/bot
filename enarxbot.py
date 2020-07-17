@@ -4,6 +4,7 @@ import requests
 import github
 import json
 import os
+import re
 
 class Suggestion:
     QUERY = """
@@ -117,3 +118,17 @@ def create_card(column, content_id, content_type):
         if error["resource"] != "ProjectCard" or error["code"] != "unprocessable":
             raise
         print("Card already in project.")
+
+# Get all issue numbers related to a PR.
+def get_related_issues(pr):
+    # Regex to pick out closing keywords.
+    regex = re.compile("(close[sd]?|fix|fixe[sd]?|resolve[sd]?)\s*:?\s+#(\d+)", re.I)
+
+    # Extract all associated issues from closing keyword in PR
+    for verb, num in regex.findall(pr.body):
+        yield int(num)
+
+    # Extract all associated issues from PR commit messages
+    for c in pr.get_commits():
+        for verb, num in regex.findall(c.commit.message):
+            yield int(num)

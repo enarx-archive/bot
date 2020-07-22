@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from github import Github
+import enarxbot
 import os
 
 github = Github(os.environ['GITHUB_TOKEN'])
@@ -12,10 +13,10 @@ columns = {c.name: c for c in project.get_columns()}
 
 for issue in github.search_issues(f"org:enarx is:issue state:open is:public -label:conference -project:enarx/{project.number}"):
     if issue.assignee is not None:
-        columns['Assigned'].create_card(content_id=issue.id, content_type='Issue')
+        enarxbot.create_card(columns['Assigned'], issue.id, 'Issue')
 
 for issue in github.search_issues(f"org:enarx is:pr state:open is:public -project:enarx/{project.number}"):
     pr = issue.as_pull_request()
 
     if pr.assignee is not None:
-        columns['Reviewing'].create_card(content_id=pr.id, content_type='PullRequest')
+        enarxbot.create_card(columns['Reviewing'], pr.id, 'PullRequest')

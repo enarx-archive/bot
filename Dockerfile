@@ -9,3 +9,4 @@ COPY github.conf /etc/nginx/conf.d/github.conf
 COPY hosts.conf /etc/nginx/hosts.conf
 
 COPY enarx-* /usr/local/bin/
+COPY enarxbot.py /usr/local/lib/python3.8/site-packages/

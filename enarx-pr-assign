@@ -1,0 +1,79 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: Apache-2.0
+
+import enarxbot
+
+github = enarxbot.connect()
+
+# Return a dictionary with the latest review for every reviewer on a given PR.
+def get_latest_reviews(pr):
+    return {r.user.id: r for r in pr.get_reviews()}
+
+def get_requested_reviewers(pr):
+    # Collect sets of the latest reviews.
+    latest_reviews = get_latest_reviews(pr)
+    changes_requested_reviews = {u.user.id: u for (k, u) in latest_reviews.items() if u.state == "CHANGES_REQUESTED"}
+    
+    # Yield reviewers whose Changes Requested reviews have been addressed.
+    for e in pr.get_issue_events():
+        # Validate event.
+        if e.requested_reviewer is None:
+            continue
+        if e.requested_reviewer.id not in changes_requested_reviews:
+            continue
+        if e.created_at <= changes_requested_reviews[e.requested_reviewer.id].submitted_at:
+            continue
+
+        # If the above condition is true, the PR author must have requested
+        # a re-review after the latest submitted CHANGES_REQUESTED review
+        # from an individual reviewer, implying that their review has been
+        # addressed and the reviewer needs to re-review.
+        yield e.requested_reviewer.login
+
+    # Yield reviewers who have been requested, but have not left any kind of
+    # review yet.
+    for reviewer in pr.get_review_requests()[0]:
+        if reviewer.id not in latest_reviews.keys():
+            yield reviewer.login
+
+def handle(issue, pr, responsible):
+    assignees = {a.login for a in pr.assignees}
+
+    remove = assignees - responsible
+    needed = responsible - assignees
+
+    repo = issue.repository
+    print(f"{repo.organization.login}/{repo.name}#{pr.number}:", end='')
+    for u in needed:
+        print(f" +{u}", end='')
+    for u in remove:
+        print(f" -{u}", end='')
+    print()
+
+    if remove:
+        pr.remove_from_assignees(*remove)
+    if needed:
+        pr.add_to_assignees(*needed)
+
+for issue in github.search_issues(f"org:enarx is:pr is:public is:open -is:draft"):
+    pr = issue.as_pull_request()
+
+    # Get all reviewers that have not left a review on the current revision of
+    # the PR.
+    requests = set(get_requested_reviewers(pr))
+    
+    # Construct the set of responsible people for this PR.
+    responsible = set()
+    for (key, review) in get_latest_reviews(pr).items():
+        if review.user.login == pr.user.login:
+            continue
+        elif (review.state == "APPROVED" or review.state == "COMMENTED"):
+            continue
+        elif review.state == "CHANGES_REQUESTED" and review.user.login not in requests:
+            responsible.add(pr.user.login)
+        else:
+            responsible.add(review.user.login)
+    responsible = responsible | requests
+    
+    # Handle the set of responsible people.
+    handle(issue, pr, responsible)

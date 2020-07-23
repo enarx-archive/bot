@@ -6,15 +6,22 @@ import enarxbot
 github = enarxbot.connect()
 org = github.get_organization('enarx')
 
-project = {p.name: p for p in org.get_projects(state='open')}['Sprint']
-columns = {c.name: c for c in project.get_columns()}
+sprint = {p.name: p for p in org.get_projects(state='open')}['Sprint']
+sprint_columns = {c.name: c for c in sprint.get_columns()}
+planning = {p.name: p for p in org.get_projects(state='open')}['Planning']
+planning_columns = {c.name: c for c in planning.get_columns()}
 
-for issue in github.search_issues(f"org:enarx is:issue state:open is:public -label:conference -project:enarx/{project.number}"):
-    if issue.assignee is not None:
-        enarxbot.create_card(columns['Assigned'], issue.id, 'Issue')
+assigned_issues = [p.get_content("Issue").id for p in planning_columns['Assigned'].get_cards() if p.get_content("Issue") is not None]
+assigned_prs = [p.get_content("PullRequest").id for p in planning_columns['Assigned'].get_cards() if p.get_content("PullRequest") is not None]
 
-for issue in github.search_issues(f"org:enarx is:pr state:open is:public -project:enarx/{project.number}"):
+for issue in github.search_issues(f"org:enarx is:issue state:open is:public -label:conference -project:enarx/{sprint.number}"):
+    if issue.id in assigned_issues and issue.assignee is not None:
+        enarxbot.create_card(sprint_columns['Assigned'], issue.id, 'Issue')
+
+for issue in github.search_issues(f"org:enarx is:pr state:open is:public -project:enarx/{sprint.number}"):
+    # Converting issues to PR messes with ID. Store it for later before doing so.
+    pr_id = issue.id
     pr = issue.as_pull_request()
 
-    if pr.assignee is not None:
-        enarxbot.create_card(columns['Reviewing'], pr.id, 'PullRequest')
+    if pr_id in assigned_prs and pr.assignee is not None:
+        enarxbot.create_card(sprint_columns['Reviewing'], pr.id, 'PullRequest')

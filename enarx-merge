@@ -16,7 +16,7 @@ for issue in github.search_issues("org:enarx state:open is:public is:pr review:a
 
     # `search_issues()` returns issues. Convert to PRs.
     pr = issue.as_pull_request()
-    
+
     # If all merge criteria pass, merge the PR.
     if pr.mergeable and pr.mergeable_state == "clean":
         merged_indicator = "✓"

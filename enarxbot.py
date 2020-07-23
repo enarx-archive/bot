@@ -4,6 +4,34 @@ import requests
 import github
 import os
 
+class Suggestion:
+    @classmethod
+    def query(cls, github, repo, pr):
+        reply = graphql(f"""
+query {{
+  repository(owner: "{repo.owner.login}", name: "{repo.name}") {{
+    pullRequest(number: {pr.number}) {{
+      suggestedReviewers {{
+        isAuthor
+        isCommenter
+        reviewer {{
+          login
+        }}
+      }}
+    }}
+  }}
+}}
+""")
+
+        for x in reply["data"]["repository"]["pullRequest"]["suggestedReviewers"]:
+            reviewer = github.get_user(x["reviewer"]["login"])
+            yield cls(reviewer, x["isAuthor"], x["isCommenter"])
+
+    def __init__(self, reviewer, author, commenter):
+        self.reviewer = reviewer
+        self.is_author = author
+        self.is_commenter = commenter
+
 def connect():
     token = os.environ.get('GITHUB_TOKEN', None)
     return github.Github(token)

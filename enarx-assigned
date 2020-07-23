@@ -1,11 +1,9 @@
 #!/usr/bin/python3
 # SPDX-License-Identifier: Apache-2.0
 
-from github import Github
 import enarxbot
-import os
 
-github = Github(os.environ['GITHUB_TOKEN'])
+github = enarxbot.connect()
 org = github.get_organization('enarx')
 
 project = {p.name: p for p in org.get_projects(state='open')}['Sprint']

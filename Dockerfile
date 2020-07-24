@@ -4,6 +4,7 @@ RUN dnf -y update
 RUN dnf -y install nginx
 RUN dnf -y install nss_wrapper
 RUN dnf -y install python3-pygithub
+RUN pip install pycodestyle
 
 COPY github.conf /etc/nginx/conf.d/github.conf
 COPY hosts.conf /etc/nginx/hosts.conf

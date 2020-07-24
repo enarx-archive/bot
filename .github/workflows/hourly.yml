@@ -20,6 +20,8 @@ jobs:
         update-ca-trust
     - name: nginx
       run: nginx -c /etc/nginx/nginx.conf
+    - name: labels
+      run: LD_PRELOAD=libnss_wrapper.so enarx-labels
     - name: triage
       run: LD_PRELOAD=libnss_wrapper.so enarx-triage
     - name: pr-request

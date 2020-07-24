@@ -1,0 +1,190 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: Apache-2.0
+
+import enarxbot
+
+LABEL_GROUPS = {
+    # Applied to all repos...
+    None: {
+        'bug': {
+            'description': "Something isn't working",
+            'color': 'd73a4a',
+        },
+        'debt': {
+            'description': 'Issues to deal with later',
+            'color': '0c0c75',
+        },
+        'documentation': {
+            'description': 'Improvements or additions to documentation',
+            'color': 'efef15',
+        },
+        'duplicate': {
+            'description': 'This issue or pull request already exists',
+            'color': 'cfd3d7',
+        },
+        'enhancement': {
+            'description': 'New feature or request',
+            'color': 'a2eeef',
+        },
+        'expertise needed': {
+            'description': 'This needs special attention from an area specialist.',
+            'color': 'f9928e',
+        },
+        'good first issue': {
+            'description': 'Good for newcomers',
+            'color': 'a8f475',
+        },
+        'help wanted': {
+            'description': 'Extra attention is needed',
+            'color': '008672',
+        },
+
+        'invalid': {
+            'description': "This doesn't seem right",
+            'color': 'e4e669',
+        },
+        'meta': {
+            'description': 'Larger project tasks and goals',
+            'color': '149e7b',
+        },
+        'question': {
+            'description': 'Further information is requested',
+            'color': 'd876e3',
+        },
+        'research': {
+            'description': '',
+            'color': 'ed8661',
+        },
+        'security': {
+            'description': 'Issues that have security implications',
+            'color': 'ff0000',
+        },
+        'wontfix': {
+            'description': 'This will not be worked on',
+            'color': 'ffffff',
+        }
+    },
+    "technology": {
+        'amd sev': {
+            'description': 'Issues related to AMD SEV',
+            'color': '000000',
+        },
+        'ibm pef': {
+            'description': 'Issues related to IBM PEF',
+            'color': '0043ce',
+        },
+        'intel sgx': {
+            'description': 'Issues related to Intel SGX',
+            'color': '0071c5',
+        },
+        'wasm': {
+            'description': 'Issues related to WebAssembly',
+            'color': '654EF0',
+        },
+        'host-components': {
+            'description': 'Components that live on the host, but not in Keeps',
+            'color': 'f22933',
+        },
+        'syscall': {
+            'description': 'syscall-related issues and PRs',
+            'color': 'a51f3c',
+        },
+    },
+    "infrastructure": {
+        'infrastructure': {
+            'description': 'Improvements or additions to project infrastructure',
+            'color': 'ffdda8',
+        },
+    },
+    "conference": {
+        'conference': {
+            'description': 'Opportunities to talk about Enarx',
+            'color': 'f98918',
+        },
+    },
+    "mentorship": {
+        'mentorship': {
+            'description': 'A request for mentorship on the project.',
+            'color': '0e8a16',
+        },
+    },
+}
+
+REPOS = {
+    "enarx": [ "technology", "infrastructure", "conference", "mentorship" ],
+    "bot": [ "infrastructure" ],
+}
+
+github = enarxbot.connect()
+org = github.get_organization('enarx')
+
+for repo in org.get_repos():
+    # Construct the set of labels that should be on the repo.
+    current_labels = {}
+    try:
+        for group in REPOS[repo.name]:
+            current_labels.update(LABEL_GROUPS[group])
+    except:
+        pass
+    current_labels.update(LABEL_GROUPS[None])
+    current_labels_names = {l for l in current_labels.keys()}
+
+    # Get the existing set of labels on the repo.
+    existing_labels = {l.name: l for l in repo.get_labels()}
+    existing_labels_names = {l for l in existing_labels.keys()}
+
+    # Construct a dictionary of old label names and their new names to be used
+    # in renaming.
+    all_old_names = {}
+    for k in current_labels_names:
+        for old_name in current_labels[k].get('old_names', []):
+            all_old_names[old_name] = k
+
+    # Find the set of labels on the repo that need to be renamed.
+    to_be_renamed = existing_labels_names & all_old_names.keys()
+
+    # Rename, if there are labels to be renamed.
+    if len(to_be_renamed) > 0:
+        for name in to_be_renamed:
+            print(f"{repo.name}: renaming label {name} to {all_old_names[name]}")
+            label = existing_labels[name]
+            label.edit(name=all_old_names[name], description=label.description, color=label.color)
+
+        # To prevent actions being taken on stale cache entries, don't do
+        # further processing after renames happen (if they happen).
+        continue
+
+    # Construct sets of label names to use in processing.
+    labels_to_add = current_labels_names - existing_labels_names
+    labels_to_delete = existing_labels_names - current_labels_names
+    common_labels = existing_labels_names & current_labels_names
+
+    # Add new labels, and delete unused ones.
+    for name in labels_to_add:
+        new_label = current_labels[name]
+        repo.create_label(name=name, color=new_label['color'], description=new_label['description'])
+    for name in labels_to_delete:
+        existing_labels[name].delete()
+
+    # Ensure common labels share the same colors and descriptions.
+    edited_labels = set()
+    for name in common_labels:
+        color = existing_labels[name].color != current_labels[name]['color']
+        description = existing_labels[name].description != current_labels[name]['description']
+
+        if color or description:
+            edited_labels.add(name)
+            existing_labels[name].edit(name, current_labels[name]['color'], current_labels[name]['description'])
+
+    # Print status.
+    print(f"{org.name}/{repo.name}:", end="")
+    for label in sorted(current_labels_names | existing_labels_names):
+        state = ""
+        if label in labels_to_add:
+            state = "+"
+        if label in labels_to_delete:
+            state = "-"
+        if label in edited_labels:
+            state = "*"
+        print(f" {state}{label}", end="")
+    print()

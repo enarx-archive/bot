@@ -22,9 +22,9 @@ jobs:
       run: nginx -c /etc/nginx/nginx.conf
     - name: triage
       run: LD_PRELOAD=libnss_wrapper.so enarx-triage
-    - name: merge
-      run: LD_PRELOAD=libnss_wrapper.so enarx-merge
-    - name: prstate
-      run: LD_PRELOAD=libnss_wrapper.so enarx-prstate
+    - name: pr-merge
+      run: LD_PRELOAD=libnss_wrapper.so enarx-pr-merge
+    - name: pr-assign
+      run: LD_PRELOAD=libnss_wrapper.so enarx-pr-assign
     - name: assigned
       run: LD_PRELOAD=libnss_wrapper.so enarx-assigned

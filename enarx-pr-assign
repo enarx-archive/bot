@@ -4,6 +4,10 @@
 import enarxbot
 import datetime
 
+class Override(Exception):
+    def __init__(self, responsible):
+        self.responsible = responsible
+
 def merge_events_and_reviews(pr):
     "Gets a summary of all events on a PR by merging issue events and reviews."
     def inner(pr):
@@ -28,7 +32,7 @@ def merge_events_and_reviews(pr):
     return sorted(inner(pr), key=lambda x: x["when"])
 
 def get_responsible(pr):
-    "Gets a set of users responsible for a PR."
+    "Yields the users responsible for a PR or raises Override(responsible)."
 
     # Our strategy in this function is to reverse iterate through the events
     # of each PR participant trying to find the most recent event that assigns
@@ -48,7 +52,7 @@ def get_responsible(pr):
             elif what in ("DISMISSED", "PENDING"):
                 yield who
             elif what == "CHANGES_REQUESTED":
-                yield pr.user.login
+                raise Override({pr.user.login})
             elif what == "APPROVED":
                 break # Neither PR author nor reviewer are responsible.
             else:
@@ -61,7 +65,11 @@ for issue in enarxbot.connect().search_issues(f"org:enarx is:pr is:public is:ope
     slug = f"{issue.repository.organization.login}/{issue.repository.name}#{issue.number}"
     pr = issue.as_pull_request()
 
-    responsible = set(get_responsible(pr))
+    try:
+        responsible = set(get_responsible(pr))
+    except Override as e:
+        responsible = set(e.responsible)
+
     assignees = {a.login for a in pr.assignees}
 
     remove = assignees - responsible

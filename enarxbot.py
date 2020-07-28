@@ -2,28 +2,30 @@
 
 import requests
 import github
+import json
 import os
 
 class Suggestion:
-    @classmethod
-    def query(cls, github, repo, pr):
-        reply = graphql(f"""
-query {{
-  repository(owner: "{repo.owner.login}", name: "{repo.name}") {{
-    pullRequest(number: {pr.number}) {{
-      suggestedReviewers {{
+    QUERY = """
+query($owner:String!, $repo:String!, $pr:Int!) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $pr) {
+      suggestedReviewers {
         isAuthor
         isCommenter
-        reviewer {{
+        reviewer {
           login
-        }}
-      }}
-    }}
-  }}
-}}
-""")
+        }
+      }
+    }
+  }
+}
+"""
 
-        for x in reply["data"]["repository"]["pullRequest"]["suggestedReviewers"]:
+    @classmethod
+    def query(cls, github, repo, pr):
+        data = graphql(cls.QUERY, owner=repo.owner.login, repo=repo.name, pr=pr.number)
+        for x in data["repository"]["pullRequest"]["suggestedReviewers"]:
             reviewer = github.get_user(x["reviewer"]["login"])
             yield cls(reviewer, x["isAuthor"], x["isCommenter"])
 
@@ -36,19 +38,76 @@ def connect():
     token = os.environ.get('GITHUB_TOKEN', None)
     return github.Github(token)
 
-def graphql(query):
+class HTTPError(Exception):
+    def __init__(self, reply):
+        self.reply = reply
+
+class GraphQLError(Exception):
+    def __init__(self, errors):
+        self.errors = errors
+
+# A depagination example: fetch all PR numbers for enarx/enarx.
+#
+# query = """
+# query($owner:String!, $name:String!, $cursor:String) {
+#   repository(owner:$owner, name:$name) {
+#     pullRequests(first:100, after:$cursor) {
+#       pageInfo { endCursor hasNextPage }
+#       nodes {
+#         number
+#       }
+#     }
+#   }
+# }
+# """
+#
+# data = graphql(query, page=["repository", "pullRequests"], owner="enarx", name="enarx")
+#
+# Your query:
+#   * MUST have a `$cursor:String` variable
+#   * MUST specify `after: $cursor` correctly
+#   * MUST fetch `pageInfo { endCursor hasNextPage }`
+#   * MUST have a `nodes` entity on the pagination object
+#   * SHOULD fetch as many objects as you can (i.e. `first: 100`)
+#
+# The results of depagination are merged. Therefore, you receive one big output list.
+# Similarly, the `pageInfo` object is removed from the result.
+def graphql(query, page=None, **kwargs):
+    "Perform a GraphQL query."
+    params = { "query": query.strip(), "variables": json.dumps(kwargs) }
     token = os.environ.get('GITHUB_TOKEN', None)
-    json = { "query": query }
     headers = {}
 
     if token is not None:
         headers["Authorization"] = f"token {token}"
 
-    reply = requests.post("https://api.github.com/graphql", json=json, headers=headers)
-    if reply.status_code == 200:
-        return reply.json()
+    # Do the request and check for HTTP errors.
+    reply = requests.post("https://api.github.com/graphql", json=params, headers=headers)
+    if reply.status_code != 200:
+        raise HTTPError(reply)
 
-    raise Exception(f"Query failed: {reply.status_code}! {query}")
+    # Check for GraphQL errors.
+    data = reply.json()
+    if "errors" in data:
+        raise GraphQLError(data["errors"])
+    data = data["data"]
+
+    # Do depagination.
+    if page is not None:
+        obj = data
+        for name in page:
+            obj = obj[name]
+
+        pi = obj.pop("pageInfo")
+        if pi["hasNextPage"]:
+            kwargs["cursor"] = pi["endCursor"]
+            next = graphql(query, page, **kwargs)
+            for name in page:
+                next = next[name]
+
+            obj["nodes"].extend(next["nodes"])
+
+    return data
 
 def create_card(column, content_id, content_type):
     try:

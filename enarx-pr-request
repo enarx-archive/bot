@@ -1,0 +1,59 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: Apache-2.0
+
+import enarxbot
+import random
+
+github = enarxbot.connect()
+org = github.get_organization("enarx")
+
+# Auto-assign for all PRs in the org.
+for issue in github.search_issues(f"org:enarx is:pr is:public is:open -is:draft"):
+    repo = issue.repository
+    pr = issue.as_pull_request()
+
+    # First, put the code owner on all code reviews as code owner.
+    owner = github.get_user("npmccallum")
+
+    # Construct sets of reviewers. Exclude both the code owner and the PR
+    # author.
+    suggested = {s.reviewer for s in enarxbot.Suggestion.query(github, repo, pr)} - {owner} - {pr.user}
+    reviews = {t.name: t for t in org.get_teams()}['reviews']
+    reviews_team = {r for r in reviews.get_members()} - {owner} - {pr.user}
+
+    # Figure out if currently requested reviewers include the code owner and
+    # two reviewers from the Reviews team.
+    requested_reviewers = {r.user: r for r in pr.get_reviews()}
+    requested_reviewers = {r for r in requested_reviewers.keys()}
+    requested_review_team = requested_reviewers & reviews_team
+    if owner in requested_reviewers and len(requested_review_team) >= 2:
+        continue
+
+    # Construct a list of reviewers to request.
+    to_request = set()
+    to_request.add(owner)
+
+    # If there are valid suggested reviewers, and fewer than two people
+    # from the reviews team requested for review, grab a suggested reviewer.
+    suggested_reviewer = None
+    if len(requested_review_team) < 2 and len(suggested) > 0:
+        suggested_reviewer = random.sample(suggested, 1)[0]
+        to_request.add(suggested_reviewer)
+    reviews_team = reviews_team - {suggested_reviewer}
+
+    # If we're still short, add random reviewers until we hit three.
+    to_request = to_request | requested_reviewers
+    random_to_add = 3 - len(to_request)
+    if random_to_add > 0:
+        random_reviewers = set(random.sample(reviews_team, random_to_add))
+        to_request = to_request | random_reviewers
+
+    # Print status.
+    print(f"{repo.name}#{pr.number}:", end="")
+    for user in sorted(to_request, key=lambda x: x.login):
+        state = "" if user in requested_reviewers else "+"
+        print(f" {state}{user.login}", end="")
+    print()
+
+    # With all three selected, request them as reviewers.
+    pr.create_review_request(reviewers=list(to_request))

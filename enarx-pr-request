@@ -56,4 +56,5 @@ for issue in github.search_issues(f"org:enarx is:pr is:public is:open -is:draft"
     print()
 
     # With all three selected, request them as reviewers.
-    pr.create_review_request(reviewers=list(to_request))
+    to_request = [r.login for r in to_request]
+    pr.create_review_request(reviewers=to_request)

@@ -22,7 +22,7 @@ jobs:
       run: nginx -c /etc/nginx/nginx.conf
     - name: triage
       run: LD_PRELOAD=libnss_wrapper.so enarx-triage
-    - name: auto-request
+    - name: pr-request
       run: LD_PRELOAD=libnss_wrapper.so enarx-pr-request
     - name: pr-merge
       run: LD_PRELOAD=libnss_wrapper.so enarx-pr-merge

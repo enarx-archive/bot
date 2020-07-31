@@ -11,12 +11,13 @@ print(" Merged? | Repository + PR number | Mergeable? | State  ")
 print("-------------------------------------------------------")
 
 for issue in github.search_issues("org:enarx state:open is:public is:pr review:approved sort:created-asc"):
+    repo = issue.repository
     # Status strings.
     merged_indicator = "✗"
     pr_identifier = f"{issue.repository.name}#{issue.number}"
 
     # `search_issues()` returns issues. Convert to PRs.
-    pr = issue.as_pull_request()
+    pr = repo.get_pr(issue.number)
 
     # If all merge criteria pass, merge the PR.
     if pr.mergeable and pr.mergeable_state == "clean":

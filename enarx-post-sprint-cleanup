@@ -17,11 +17,18 @@ for assigned_card in sprint_columns['Assigned'].get_cards():
         # If a valid issue, we want to move it to Nominated in Planning.
         # First, check if a card for this issue already exists. If yes, move it
         # instead of creating a new card.
-        for column in planning_columns:
+        found = False
+        for (key, column) in planning_columns.items():
+            if found:
+                continue
             for card in column.get_cards():
                 if card.get_content("Issue") is not None and card.get_content("Issue").id == issue.id:
+                    found = True
                     card.move(position="bottom", column=planning_columns['Nominated'])
+                    assigned_card.delete()
                     continue
+        if found:
+            continue
         # If the loop didn't find any matching cards, create a new one.
         enarxbot.create_card(planning_columns['Nominated'], issue.id, "Issue")
 

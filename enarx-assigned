@@ -12,8 +12,8 @@ sprint_columns = {c.name: c for c in sprint.get_columns()}
 planning = {p.name: p for p in org.get_projects(state='open')}['Planning']
 planning_columns = {c.name: c for c in planning.get_columns()}
 
-assigned_issues = [p.get_content("Issue").id for p in planning_columns['Assigned'].get_cards() if p.get_content() is github.Issue.Issue]
-assigned_prs = [p.get_content("PullRequest").id for p in planning_columns['Assigned'].get_cards() if p.get_content() is github.PullRequest.PullRequest]
+assigned_issues = [p.get_content("Issue").id for p in planning_columns['Assigned'].get_cards() if type(p.get_content()) is github.Issue.Issue]
+assigned_prs = [p.get_content("PullRequest").id for p in planning_columns['Assigned'].get_cards() if type(p.get_content()) is github.PullRequest.PullRequest]
 
 for issue in g.search_issues(f"org:enarx is:issue state:open is:public -label:conference -project:enarx/{sprint.number}"):
     if issue.id in assigned_issues and issue.assignee is not None:

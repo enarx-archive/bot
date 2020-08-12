@@ -1,0 +1,12 @@
+name: enarxbot
+description: GitHub Actions project automation for Enarx
+
+branding:
+  icon: zap
+  color: gray-dark
+
+runs:
+  using: "composite"
+  steps:
+    - run: env
+      shell: bash

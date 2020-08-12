@@ -8,5 +8,5 @@ branding:
 runs:
   using: "composite"
   steps:
-    - run: env
+    - run: bash -c "env | sort"
       shell: bash

@@ -11,4 +11,4 @@ runs:
     - run: bash -c "env | sort"
       shell: bash
       env:
-        BAR: bar
+        BAR: ${{ secrets.TEST_SECRET }}

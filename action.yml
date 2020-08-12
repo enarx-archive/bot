@@ -10,5 +10,5 @@ runs:
     TEST_SECRET: ${{ secrets.TEST_SECRET }}
   using: "composite"
   steps:
-    - run: env
+    - run: env | sort
       shell: bash

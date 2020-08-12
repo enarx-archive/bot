@@ -6,6 +6,8 @@ branding:
   color: gray-dark
 
 runs:
+  env:
+    TEST_SECRET: ${{ secrets.TEST_SECRET }}
   using: "composite"
   steps:
     - run: env

@@ -11,5 +11,5 @@ runs:
     DUMMY: dummy
   using: "composite"
   steps:
-    - run: env | sort
+    - run: bash -c "env | sort"
       shell: bash

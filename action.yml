@@ -10,3 +10,5 @@ runs:
   steps:
     - run: bash -c "env | sort"
       shell: bash
+    - run: cat $GITHUB_EVENT_PATH
+      shell: bash

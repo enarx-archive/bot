@@ -10,3 +10,5 @@ runs:
   steps:
     - run: bash -c "env | sort"
       shell: bash
+      env:
+        BAR: bar

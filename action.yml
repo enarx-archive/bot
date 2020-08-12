@@ -7,7 +7,7 @@ branding:
 
 runs:
   env:
-    TEST_SECRET: ${{ secrets.TEST_SECRET }}
+#    TEST_SECRET: ${{ secrets.TEST_SECRET }}
     DUMMY: dummy
   using: "composite"
   steps:

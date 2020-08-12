@@ -107,6 +107,9 @@ def graphql(query, cursors=None, prev_path=None, **kwargs):
     if token is not None:
         headers["Authorization"] = f"token {token}"
 
+    # Opt into preview API fields for PR merge status.
+    headers["Accept"] = "application/vnd.github.merge-info-preview+json"
+
     # Do the request and check for HTTP errors.
     reply = requests.post(url, json=params, headers=headers)
     if reply.status_code != 200:

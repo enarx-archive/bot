@@ -1,0 +1,66 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: Apache-2.0
+
+import bot
+
+import json
+import sys
+import os
+
+if os.environ["GITHUB_EVENT_NAME"] != "pull_request_target":
+    sys.exit(0)
+
+with open(os.environ["GITHUB_EVENT_PATH"]) as f:
+    event = json.load(f)
+
+if event["action"] not in {"opened", "reopened"}:
+    sys.exit(0)
+
+pr = event['pull_request']['node_id']
+
+# Find out what projects the PR is in.
+result = bot.graphql(
+    """
+    query($pr:ID!, $cursor:String) {
+        node(id:$pr) {
+            ... on PullRequest {
+                projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cursor) {
+                    pageInfo { endCursor hasNextPage }
+                    nodes {
+                        id
+                        column {
+                            id
+                            name
+                            project {
+                                id
+                                name
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    """,
+    pr=pr,
+    page=["node", "projectCards"]
+)
+
+cards = result["node"]["projectCards"]["nodes"]
+projects = {card["column"]["project"]["id"] for card in cards}
+
+# If the PR isn't in the Planning project, add it to Triage.
+if bot.PROJECT_PLANNING not in projects:
+    bot.graphql(
+        """
+        mutation($input:AddProjectCardInput!) {
+            addProjectCard(input:$input) {
+                clientMutationId
+            }
+        }
+        """,
+        input={
+            "projectColumnId": bot.PROJECT_PLANNING_TRIAGE,
+            "contentId": pr
+        }
+    )

@@ -50,7 +50,7 @@ cards = result["node"]["projectCards"]["nodes"]
 projects = {card["column"]["project"]["id"] for card in cards}
 
 # If the PR isn't in the Planning project, add it to Triage.
-if bot.PROJECT_PLANNING not in projects:
+if bot.PROJECTS["Planning"] not in projects:
     bot.graphql(
         """
         mutation($input:AddProjectCardInput!) {
@@ -60,7 +60,7 @@ if bot.PROJECT_PLANNING not in projects:
         }
         """,
         input={
-            "projectColumnId": bot.PROJECT_PLANNING_TRIAGE,
+            "projectColumnId": bot.COLUMNS["Planning"]["Triage"],
             "contentId": pr
         }
     )

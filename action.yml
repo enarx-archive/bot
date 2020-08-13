@@ -12,5 +12,5 @@ runs:
       shell: bash
     - run: cat $GITHUB_EVENT_PATH
       shell: bash
-    - run: enarxbot-pr-triage
+    - run: $GITHUB_ACTION_PATH/enarxbot-pr-triage
       shell: python

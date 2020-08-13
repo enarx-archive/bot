@@ -1,0 +1,16 @@
+name: enarxbot
+description: GitHub Actions project automation for Enarx
+
+branding:
+  icon: zap
+  color: gray-dark
+
+runs:
+  using: "composite"
+  steps:
+    - run: bash -c "env | sort"
+      shell: bash
+    - run: cat $GITHUB_EVENT_PATH
+      shell: bash
+    - run: $GITHUB_ACTION_PATH/enarxbot-pr-triage
+      shell: bash

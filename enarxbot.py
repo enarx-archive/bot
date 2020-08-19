@@ -119,6 +119,16 @@ def create_card(column, content_id, content_type):
             raise
         print("Card already in project.")
 
+def merge(pr):
+    try:
+        pr.merge(merge_method="rebase")
+    except github.GithubException as e:
+        error = e.data["errors"][0]
+        if error["resource"] != "PullRequest":
+            raise
+        print(f"PR {pr.number} needs attention from the author. Assigning.")
+        pr.add_to_assignees([pr.user.login])
+
 # Get all issue numbers related to a PR.
 def get_related_issues(pr):
     # Regex to pick out closing keywords.

@@ -21,7 +21,7 @@ for issue in github.search_issues("org:enarx state:open is:public is:pr review:a
     # If all merge criteria pass, merge the PR.
     if pr.mergeable and pr.mergeable_state == "clean":
         merged_indicator = "✓"
-        pr.merge(merge_method="rebase")
+        enarxbot.merge(pr)
 
     # List the status of the pull request.
     print(f" {merged_indicator:8}| {pr_identifier:23}| {str(pr.mergeable):11}| {pr.mergeable_state:7}")

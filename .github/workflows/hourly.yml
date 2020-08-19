@@ -24,10 +24,10 @@ jobs:
       run: LD_PRELOAD=libnss_wrapper.so enarx-triage
     - name: pr-request
       run: LD_PRELOAD=libnss_wrapper.so enarx-pr-request
-    - name: pr-merge
-      run: LD_PRELOAD=libnss_wrapper.so enarx-pr-merge
     - name: pr-assign
       run: LD_PRELOAD=libnss_wrapper.so enarx-pr-assign
+    - name: pr-merge
+      run: LD_PRELOAD=libnss_wrapper.so enarx-pr-merge
     - name: assigned
       run: LD_PRELOAD=libnss_wrapper.so enarx-assigned
     - name: copy-labels-linked

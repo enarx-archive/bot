@@ -1,6 +1,6 @@
-name: manual
+name: cleanup-sprint-board
 
-on: 
+on:
   workflow_dispatch
 
 jobs:

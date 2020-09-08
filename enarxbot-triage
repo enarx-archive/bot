@@ -7,7 +7,7 @@ import json
 import sys
 import os
 
-if os.environ["GITHUB_EVENT_NAME"] != "pull_request_target":
+if os.environ["GITHUB_EVENT_NAME"] not in ["pull_request_target", "issues"]:
     sys.exit(0)
 
 with open(os.environ["GITHUB_EVENT_PATH"]) as f:
@@ -16,14 +16,32 @@ with open(os.environ["GITHUB_EVENT_PATH"]) as f:
 if event["action"] not in {"opened", "reopened"}:
     sys.exit(0)
 
-pr = event['pull_request']['node_id']
+id = event['pull_request']['node_id']
+if id is None:
+    id = event['issue']['node_id']
 
-# Find out what projects the PR is in.
+# Find out what projects the issue/PR is in.
 result = bot.graphql(
     """
-    query($pr:ID!, $cursor:String) {
-        node(id:$pr) {
+    query($id:ID!, $cursor:String) {
+        node(id:$id) {
             ... on PullRequest {
+                projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cursor) {
+                    pageInfo { endCursor hasNextPage }
+                    nodes {
+                        id
+                        column {
+                            id
+                            name
+                            project {
+                                id
+                                name
+                            }
+                        }
+                    }
+                }
+            }
+            ... on Issue {
                 projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cursor) {
                     pageInfo { endCursor hasNextPage }
                     nodes {
@@ -42,7 +60,7 @@ result = bot.graphql(
         }
     }
     """,
-    pr=pr,
+    id=id,
     page=["node", "projectCards"]
 )
 
@@ -61,6 +79,6 @@ if bot.PROJECTS["Planning"] not in projects:
         """,
         input={
             "projectColumnId": bot.COLUMNS["Planning"]["Triage"],
-            "contentId": pr
+            "contentId": id
         }
     )

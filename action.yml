@@ -14,3 +14,5 @@ runs:
       shell: bash
     - run: $GITHUB_ACTION_PATH/enarxbot-triage
       shell: bash
+    - run: $GITHUB_ACTION_PATH/enarxbot-assigned
+      shell: bash

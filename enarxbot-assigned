@@ -1,0 +1,117 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: Apache-2.0
+
+import bot
+
+import json
+import sys
+import os
+
+if os.environ["GITHUB_EVENT_NAME"] not in ["pull_request_target", "issues"]:
+    sys.exit(0)
+
+with open(os.environ["GITHUB_EVENT_PATH"]) as f:
+    event = json.load(f)
+
+if event["action"] != "assigned":
+    sys.exit(0)
+
+id_type = "pr"
+id = event['pull_request']['node_id']
+if id is None:
+    id_type = "issue"
+    id = event['issue']['node_id']
+
+# Find out what projects the issue/PR is in, as well as their assignees.
+result = bot.graphql(
+    """
+    query($id:ID!, $cardCursor:String, $assigneeCursor:String) {
+        node(id:$id) {
+            ... on PullRequest {
+                assignees(first:100, after:$assigneeCursor) {
+                    pageInfo { endCursor hasNextPage }
+                    nodes {
+                        login
+                    }
+                }
+                projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cardCursor) {
+                    pageInfo { endCursor hasNextPage }
+                    nodes {
+                        id
+                        column {
+                            id
+                            name
+                            project {
+                                id
+                                name
+                            }
+                        }
+                    }
+                }
+            }
+            ... on Issue {
+                assignees(first:100, after:$assigneeCursor) {
+                    pageInfo { endCursor hasNextPage }
+                    nodes {
+                        login
+                    }
+                }
+                projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cardCursor) {
+                    pageInfo { endCursor hasNextPage }
+                    nodes {
+                        id
+                        column {
+                            id
+                            name
+                            project {
+                                id
+                                name
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    """,
+    id=id,
+    page={
+        "cardCursor": ["node", "projectCards"],
+        "assigneeCursor": ["node", "assignees"],
+    }
+)
+
+# Construct lists of assignees, projects, and columns.
+assignees = result["node"]["assignees"]["nodes"]
+cards = result["node"]["projectCards"]["nodes"]
+columns = {card["column"]["project"]["id"]: card["column"]["name"] for card in cards}
+
+input = None
+
+if len(assignees) > 0 and bot.PROJECTS["Sprint"] not in columns.keys():
+    # Issues must additionally be present in the "Assigned" column of the
+    # Planning board to be moved.
+    if id_type == "issue" and columns.get(bot.PROJECTS["Planning"]) == "Assigned":
+        input = {
+            "projectColumnId": bot.COLUMNS["Sprint"]["Assigned"],
+            "contentId": id
+        }
+
+    if id_type == "pr":
+        input = {
+            "projectColumnId": bot.COLUMNS["Sprint"]["Reviewing"],
+            "contentId": id
+        }
+
+# If this issue/PR needs to be moved, move it.
+if input is not None:
+    bot.graphql(
+        """
+        mutation($input:AddProjectCardInput!) {
+            addProjectCard(input:$input) {
+                clientMutationId
+            }
+        }
+        """,
+        input=input
+    )

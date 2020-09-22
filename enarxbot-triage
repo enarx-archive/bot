@@ -61,7 +61,9 @@ result = bot.graphql(
     }
     """,
     id=id,
-    page=["node", "projectCards"]
+    cursors={
+        'cursor': ["node", "projectCards"]
+    },
 )
 
 cards = result["node"]["projectCards"]["nodes"]

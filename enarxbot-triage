@@ -16,9 +16,8 @@ with open(os.environ["GITHUB_EVENT_PATH"]) as f:
 if event["action"] not in {"opened", "reopened"}:
     sys.exit(0)
 
-id = event['pull_request']['node_id']
-if id is None:
-    id = event['issue']['node_id']
+id = event.get('pull_request', event.get('issue'))
+id = id['node_id']
 
 # Find out what projects the issue/PR is in.
 result = bot.graphql(

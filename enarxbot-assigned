@@ -16,11 +16,14 @@ with open(os.environ["GITHUB_EVENT_PATH"]) as f:
 if event["action"] != "assigned":
     sys.exit(0)
 
-id_type = "pr"
-id = event['pull_request']['node_id']
+id = event.get('pull_request', None)
 if id is None:
     id_type = "issue"
     id = event['issue']['node_id']
+else:
+    id_type = "pr"
+    id = id['node_id']
+
 
 # Find out what projects the issue/PR is in, as well as their assignees.
 result = bot.graphql(

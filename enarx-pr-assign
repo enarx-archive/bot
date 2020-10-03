@@ -83,6 +83,6 @@ for issue in enarxbot.connect().search_issues(f"org:enarx is:pr is:public is:ope
     print()
 
     if remove:
-        pr.remove_from_assignees(*remove)
+        enarxbot.remove_from_assignees(pr, remove)
     if needed:
-        pr.add_to_assignees(*needed)
+        enarxbot.add_to_assignees(pr, needed)

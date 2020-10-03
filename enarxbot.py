@@ -129,6 +129,33 @@ def merge(pr):
         print(f"PR {pr.number} needs attention from the author. Assigning.")
         pr.add_to_assignees([pr.user.login])
 
+def review_request(pr, reviewers):
+    try:
+        pr.create_review_request(reviewers)
+    except github.GithubException as e:
+        error = e.data["message"]
+        if error != "Must have admin rights to Repository.":
+            raise
+        print(f"Enarxbot does not have correct permissions on this repo.")
+
+def add_to_assignees(pr, additions):
+    try:
+        pr.add_to_assignees(*additions)
+    except github.GithubException as e:
+        error = e.data["message"]
+        if error != "Must have admin rights to Repository.":
+            raise
+        print(f"Enarxbot does not have correct permissions on this repo.")
+
+def remove_from_assignees(pr, removals):
+    try:
+        pr.add_to_assignees(*removals)
+    except github.GithubException as e:
+        error = e.data["message"]
+        if error != "Must have admin rights to Repository.":
+            raise
+        print(f"Enarxbot does not have correct permissions on this repo.")
+
 # Get all issue numbers related to a PR.
 def get_related_issues(pr):
     # Regex to pick out closing keywords.

@@ -18,3 +18,5 @@ runs:
       shell: bash
     - run: $GITHUB_ACTION_PATH/enarxbot-pr-merge
       shell: bash
+    - run: $GITHUB_ACTION_PATH/enarxbot-copy-labels-linked
+      shell: bash

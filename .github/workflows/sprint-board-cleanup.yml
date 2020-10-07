@@ -6,17 +6,6 @@ on:
 jobs:
   manual:
     runs-on: ubuntu-latest
-    container: quay.io/enarx/bot
-    env:
-      NSS_WRAPPER_HOSTS: /etc/nginx/hosts.conf
-      GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
     steps:
-    - name: certificate
-      run: |
-        openssl req -x509 -newkey rsa:4096 -keyout /etc/nginx/api.github.com.key -out /etc/nginx/api.github.com.crt -days 1 -subj '/CN=api.github.com' -addext "subjectAltName = DNS:api.github.com" -nodes
-        cp /etc/nginx/api.github.com.crt /etc/pki/ca-trust/source/anchors/
-        update-ca-trust
-    - name: nginx
-      run: nginx -c /etc/nginx/nginx.conf
     - name: post-sprint-cleanup
-      run: LD_PRELOAD=libnss_wrapper.so enarx-post-sprint-cleanup
+      run: enarxbot-post-sprint-cleanup

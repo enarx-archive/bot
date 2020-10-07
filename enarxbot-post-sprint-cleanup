@@ -1,0 +1,120 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: Apache-2.0
+
+import bot
+
+import json
+import sys
+import os
+
+# Several GraphQL queries and mutations.
+QUERY = """
+query($sprintColumnId:ID!, $planningColumnId:ID!, $sprintCardsCursor:String, $planningCardsCursor:String) {
+    sprint: node(id:$sprintColumnId) {
+        ...on ProjectColumn {
+            cards(first:100, after:$sprintCardsCursor) {
+                pageInfo { endCursor hasNextPage }
+                nodes {
+                    id
+                    content {
+                        ...on Issue {
+                            id
+                        }
+                    }
+                }
+            }
+        }
+    }
+    planning: node(id:$planningColumnId) {
+        ...on ProjectColumn {
+            cards(first:100, after:$planningCardsCursor) {
+                pageInfo { endCursor hasNextPage }
+                nodes {
+                    id
+                    content {
+                        ...on Issue {
+                            id
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+"""
+
+QUERY_CURSORS = {
+    'sprintCardsCursor': ["sprint", "cards"],
+    'planningCardsCursor': ["planning", "cards"]
+}
+
+MOVE_CARD_MUTATION = """
+mutation($input:MoveProjectCardInput!) {
+    moveProjectCard(input:$input) {
+        clientMutationId
+    }
+}
+"""
+
+ADD_CARD_MUTATION = """
+mutation($input:AddProjectCardInput!) {
+    addProjectCard(input:$input) {
+        clientMutationId
+    }
+}
+"""
+
+DELETE_CARD_MUTATION = """
+mutation($input:DeleteProjectCardInput!) {
+    deleteProjectCard(input:$input) {
+        clientMutationId
+    }
+}
+"""
+
+if os.environ["GITHUB_EVENT_NAME"] != "workflow_dispatch":
+    sys.exit(0)
+
+# Query all cards in two columns: the assigned columns of both Planning and Sprint.
+result = bot.graphql(
+    QUERY,
+    planningColumnId=bot.COLUMNS['Planning']['Assigned'],
+    sprintColumnId=bot.COLUMNS['Sprint']['Assigned'],
+    cursors=QUERY_CURSORS
+)
+
+# Create sets of issue IDs that are in each column. Also create lookup tables
+# for corresponding card IDs for API actions.
+planning_content = {c['content']['id'] for c in result['planning']['cards']['nodes']}
+planning_content_cards = {c['content']['id']: c['id'] for c in result['planning']['cards']['nodes']}
+
+sprint_content = {c['content']['id'] for c in result['sprint']['cards']['nodes']}
+sprint_content_cards = {c['content']['id']: c['id'] for c in result['sprint']['cards']['nodes']}
+
+for content in sprint_content:
+    # If the issue is already present in an existing card on the Planning
+    # board, move that card. If not, create a new card.
+    if content in planning_content:
+        bot.graphql(
+            MOVE_CARD_MUTATION,
+            input={
+                "columnId": bot.COLUMNS["Planning"]["Nominated"],
+                "cardId": planning_content_cards[content]
+            }
+        )
+    else:
+        bot.graphql(
+            ADD_CARD_MUTATION,
+            input={
+                "projectColumnId": bot.COLUMNS["Planning"]["Nominated"],
+                "contentId": content
+            }
+        )
+
+    # Once done moving/creating cards, delete the issue from the Sprint board.
+    bot.graphql(
+        DELETE_CARD_MUTATION,
+        input={
+            "cardId": sprint_content_cards[content]
+        }
+    )

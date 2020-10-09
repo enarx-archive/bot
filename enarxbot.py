@@ -123,8 +123,8 @@ def merge(pr):
     try:
         pr.merge(merge_method="rebase")
     except github.GithubException as e:
-        error = e.data["errors"][0]
-        if error["resource"] != "PullRequest":
+        error = e.data["message"]
+        if error != "Base branch was modified. Review and try the merge again.":
             raise
         print(f"PR {pr.number} needs attention from the author. Assigning.")
         pr.add_to_assignees([pr.user.login])

@@ -41,7 +41,7 @@ query($id:ID!, $org:String!, $repo:String!, $commitsCursor:String, $prLabelsCurs
             }
         }
     }
-    repository(owner:$org, repo:$repo) {
+    repository(owner:$org, name:$repo) {
         issues(first:100, states:OPEN, after:$issuesCursor) {
             pageInfo { endCursor hasNextPage }
             nodes {

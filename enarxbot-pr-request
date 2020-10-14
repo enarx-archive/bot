@@ -67,7 +67,7 @@ QUERY_PR_CURSORS = {
 }
 
 MUTATION_REQUEST_REVIEW = """
-mutation($input:requestReviewsInput!) {
+mutation($input:RequestReviewsInput!) {
     requestReviews(input:$input) {
         clientMutationId
     }
@@ -84,8 +84,8 @@ def migrate(dst, src, max=None):
         one = random.sample(src, 1)[0]
         src.remove(one)
 
-        status = availability[one]["status"]
-        if status is None or not status["indicatesLimitedAvailability"]:
+        status = availability[one]
+        if status is None or not status["status"]["indicatesLimitedAvailability"]:
             dst.add(one)
 
 def iterusers(nested_dictionary):
@@ -133,7 +133,7 @@ requested |= {r['requestedReviewer']['login'] for r in pr_data['node']['reviewRe
 # Get our categories.
 reviewers = potential_reviewers.copy()
 suggested = {s['reviewer']['login'] for s in pr_data['node']['suggestedReviewers']}
-authors = {event['pull_request']['user']}
+authors = {event['pull_request']['user']['login']}
 owners = {"npmccallum"}
 
 # Make sure categories are mutually exclusive.
@@ -163,5 +163,5 @@ if len(to_request) > 0:
         "pullRequestId": pr,
         "userIds": to_request,
         "teamIds": [],
-        "union": "true"
+        "union": True
     })

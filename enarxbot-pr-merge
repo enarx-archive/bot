@@ -59,8 +59,7 @@ for (id, pr) in prs.items():
     # Attempt to merge the PR if ready.
     if merged_indicator == "✓":
         bot.graphql(MERGE_MUTATION, input={
-            "input": {
                 "pullRequestId": id,
                 "mergeMethod": "REBASE"
             }
-        })
+        )

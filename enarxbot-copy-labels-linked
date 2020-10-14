@@ -111,7 +111,9 @@ result = bot.graphql(
 issue_to_labels = {i['number']: i['labels']['nodes'] for i in result['repository']['issues']['nodes']}
 
 # Using the above lookup table, create a list of all labels present on linked issues.
-related_labels = {issue_to_labels[i] for i in get_related_issues(result['node']['body'], result['node']['commits']['nodes'])}
+related_labels = []
+for i in get_related_issues(result['node']['body'], result['node']['commits']['nodes']):
+    related_labels += issue_to_labels[i]
 
 # Construct sets of labels present on the PR as well as labels present on linked
 # issues.

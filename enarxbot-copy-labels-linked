@@ -113,7 +113,9 @@ issue_to_labels = {i['number']: i['labels']['nodes'] for i in result['repository
 # Using the above lookup table, create a list of all labels present on linked issues.
 related_labels = []
 for i in get_related_issues(result['node']['body'], result['node']['commits']['nodes']):
-    related_labels += issue_to_labels[i]
+    related_label = issue_to_labels.get(i, None)
+    if related_label is not None:
+        related_labels += related_label
 
 # Construct sets of labels present on the PR as well as labels present on linked
 # issues.

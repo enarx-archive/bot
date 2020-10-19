@@ -41,6 +41,7 @@ result = bot.graphql(MERGEABLE_QUERY, cursors=cursors, owner=owner, repo=repo)
 prs = {i["id"]: i for i in result["repository"]["pullRequests"]["nodes"]}
 
 # Print column keys.
+print("")
 print(" Expected to merge? | Repository + PR number | Mergeable? | State  ")
 print("-------------------------------------------------------")
 

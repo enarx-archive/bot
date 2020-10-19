@@ -10,6 +10,8 @@ import os
 if os.environ["GITHUB_EVENT_NAME"] not in ["pull_request_target", "issues"]:
     sys.exit(0)
 
+owner, repo = os.environ["GITHUB_REPOSITORY"].split("/")
+
 with open(os.environ["GITHUB_EVENT_PATH"]) as f:
     event = json.load(f)
 
@@ -25,6 +27,7 @@ result = bot.graphql(
     query($id:ID!, $cursor:String) {
         node(id:$id) {
             ... on PullRequest {
+                number
                 projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cursor) {
                     pageInfo { endCursor hasNextPage }
                     nodes {
@@ -41,6 +44,7 @@ result = bot.graphql(
                 }
             }
             ... on Issue {
+                number
                 projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cursor) {
                     pageInfo { endCursor hasNextPage }
                     nodes {
@@ -68,8 +72,12 @@ result = bot.graphql(
 cards = result["node"]["projectCards"]["nodes"]
 projects = {card["column"]["project"]["id"] for card in cards}
 
-# If the PR isn't in the Planning project, add it to Triage.
+# If the issue/PR isn't in the Planning project, add it to Triage.
 if bot.PROJECTS["Planning"] not in projects:
+    # Print status.
+    print(f"Adding {owner}/{repo}#{result['node']['number']} to Planning board")
+
+    # Add the content to the project.
     bot.graphql(
         """
         mutation($input:AddProjectCardInput!) {

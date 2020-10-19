@@ -10,6 +10,8 @@ import os
 if os.environ["GITHUB_EVENT_NAME"] not in ["pull_request_target", "issues"]:
     sys.exit(0)
 
+owner, repo = os.environ["GITHUB_REPOSITORY"].split("/")
+
 with open(os.environ["GITHUB_EVENT_PATH"]) as f:
     event = json.load(f)
 
@@ -31,6 +33,7 @@ result = bot.graphql(
     query($id:ID!, $cardCursor:String, $assigneeCursor:String) {
         node(id:$id) {
             ... on PullRequest {
+                number
                 assignees(first:100, after:$assigneeCursor) {
                     pageInfo { endCursor hasNextPage }
                     nodes {
@@ -53,6 +56,7 @@ result = bot.graphql(
                 }
             }
             ... on Issue {
+                number
                 assignees(first:100, after:$assigneeCursor) {
                     pageInfo { endCursor hasNextPage }
                     nodes {
@@ -95,12 +99,16 @@ if len(assignees) > 0 and bot.PROJECTS["Sprint"] not in columns.keys():
     # Issues must additionally be present in the "Assigned" column of the
     # Planning board to be moved.
     if id_type == "issue" and columns.get(bot.PROJECTS["Planning"]) == "Assigned":
+        # Print status.
+        print(f"Moving issue {owner}/{repo}#{result['node']['number']} to Sprint board")
         input = {
             "projectColumnId": bot.COLUMNS["Sprint"]["Assigned"],
             "contentId": id
         }
 
     if id_type == "pr":
+        # Print status.
+        print(f"Moving PR {owner}/{repo}#{result['node']['number']} to Sprint board")
         input = {
             "projectColumnId": bot.COLUMNS["Sprint"]["Reviewing"],
             "contentId": id

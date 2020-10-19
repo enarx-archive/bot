@@ -85,7 +85,7 @@ def migrate(dst, src, max=None):
         src.remove(one)
 
         status = availability[one]
-        if status is None or not status["status"]["indicatesLimitedAvailability"]:
+        if status is None or not status["indicatesLimitedAvailability"]:
             dst.add(one)
 
 def iterusers(nested_dictionary):

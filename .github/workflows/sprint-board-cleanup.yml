@@ -7,5 +7,7 @@ jobs:
   manual:
     runs-on: ubuntu-latest
     steps:
+    - name: checkout
+      uses: actions/checkout@v2
     - name: post-sprint-cleanup
       run: enarxbot-post-sprint-cleanup

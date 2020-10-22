@@ -85,10 +85,12 @@ def iterusers(nested_dictionary):
 
     for key, value in nested_dictionary.items():
         if key in ["author", "who"]:
-            yield value
+            if len(value) > 0:
+              yield value
         elif key == "assignees":
             for node in nested_dictionary[key]['nodes']:
-                yield node
+                if len(node) > 0:
+                  yield node
         elif key == "nodes":
             for node in nested_dictionary[key]:
                 yield from iterusers(node)

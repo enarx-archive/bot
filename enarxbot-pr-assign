@@ -119,7 +119,7 @@ def get_responsible(pr):
     # The last event which assigns responsibility is the one that we choose.
 
     events = sorted(merge_events_and_reviews(pr), key=lambda x: x["when"])
-    author = pr['author']['login']
+    author = pr['author'].get('login')
     participants = {x["who"] for x in events} - {author}
     segregated = {u: [x["what"] for x in events if x["who"] == u] for u in participants}
 
@@ -131,6 +131,8 @@ def get_responsible(pr):
             elif what in ("DISMISSED", "PENDING"):
                 yield who
             elif what == "CHANGES_REQUESTED":
+                if author is None:
+                    continue
                 raise Override({author})
             elif what == "APPROVED":
                 break # Neither PR author nor reviewer are responsible.

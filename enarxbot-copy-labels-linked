@@ -99,13 +99,17 @@ owner, repo = os.environ["GITHUB_REPOSITORY"].split("/")
 id = event['pull_request']['node_id']
 
 # Get PR data and open issues in the repo.
-result = bot.graphql(
-    QUERY,
-    id=id,
-    org=owner,
-    repo=repo,
-    cursors=QUERY_CURSORS
-)
+try:
+    result = bot.graphql(
+        QUERY,
+        id=id,
+        org=owner,
+        repo=repo,
+        cursors=QUERY_CURSORS
+    )
+except bot.TokenError as e:
+    print(e.error)
+    sys.exit(0)
 
 # Create a lookup table for issue labels by number.
 issue_to_labels = {i['number']: i['labels']['nodes'] for i in result['repository']['issues']['nodes']}

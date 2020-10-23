@@ -44,6 +44,10 @@ class GraphQLError(Exception):
     def __init__(self, errors):
         self.errors = errors
 
+class TokenError(Exception):
+    def __init__(self, error):
+        self.error = error
+
 # A multiple, nested depagination example: fetch all issues, PRs, and PR
 # timeline items in enarx/enarx.
 #
@@ -101,11 +105,17 @@ def graphql(query, cursors=None, prev_path=None, **kwargs):
     url = os.environ.get("GITHUB_GRAPHQL_URL", "https://api.github.com/graphql")
 
     params = { "query": query.strip(), "variables": json.dumps(kwargs) }
-    token = os.environ.get('GITHUB_TOKEN', None)
+    token = os.environ.get('BOT_TOKEN', None)
     headers = {}
 
     if token is not None:
         headers["Authorization"] = f"token {token}"
+    else:
+        raise TokenError(error="""
+BOT_TOKEN is unset. If you wish to opt in to bot automation, provide an
+appropriately-scoped personal access token as a shared secret named
+BOT_TOKEN.
+    """)
 
     # Opt into preview API fields for PR merge status.
     headers["Accept"] = "application/vnd.github.merge-info-preview+json"

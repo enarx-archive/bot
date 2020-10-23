@@ -36,7 +36,12 @@ if os.environ["GITHUB_EVENT_NAME"] != "schedule":
 
 owner, repo = os.environ["GITHUB_REPOSITORY"].split("/")
 cursors = {"cursor": ["repository", "pullRequests"]}
-result = bot.graphql(MERGEABLE_QUERY, cursors=cursors, owner=owner, repo=repo)
+
+try:
+    result = bot.graphql(MERGEABLE_QUERY, cursors=cursors, owner=owner, repo=repo)
+except bot.TokenError as e:
+    print(e.error)
+    sys.exit(0)
 
 prs = {i["id"]: i for i in result["repository"]["pullRequests"]["nodes"]}
 

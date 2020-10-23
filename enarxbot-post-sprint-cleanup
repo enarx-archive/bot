@@ -76,12 +76,16 @@ if os.environ["GITHUB_EVENT_NAME"] != "workflow_dispatch":
     sys.exit(0)
 
 # Query all cards in two columns: the assigned columns of both Planning and Sprint.
-result = bot.graphql(
-    QUERY,
-    planningColumnId=bot.COLUMNS['Planning']['Assigned'],
-    sprintColumnId=bot.COLUMNS['Sprint']['Assigned'],
-    cursors=QUERY_CURSORS
-)
+try:
+    result = bot.graphql(
+        QUERY,
+        planningColumnId=bot.COLUMNS['Planning']['Assigned'],
+        sprintColumnId=bot.COLUMNS['Sprint']['Assigned'],
+        cursors=QUERY_CURSORS
+    )
+except bot.TokenError as e:
+    print(e.error)
+    sys.exit(0)
 
 # Create sets of issue IDs that are in each column. Also create lookup tables
 # for corresponding card IDs for API actions.

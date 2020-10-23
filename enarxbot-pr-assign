@@ -147,7 +147,11 @@ if os.environ["GITHUB_EVENT_NAME"] != "schedule":
 
 org, repo = os.environ["GITHUB_REPOSITORY"].split("/")
 
-pr_data = bot.graphql(QUERY, org=org, repo=repo, cursor=QUERY_CURSORS)
+try:
+    pr_data = bot.graphql(QUERY, org=org, repo=repo, cursor=QUERY_CURSORS)
+except bot.TokenError as e:
+    print(e.error)
+    sys.exit(0)
 
 # Create a login:id lookup table.
 login_to_id = {u["login"]: u["id"] for u in iterusers(pr_data)}

@@ -22,52 +22,56 @@ id = event.get('pull_request', event.get('issue'))
 id = id['node_id']
 
 # Find out what projects the issue/PR is in.
-result = bot.graphql(
-    """
-    query($id:ID!, $cursor:String) {
-        node(id:$id) {
-            ... on PullRequest {
-                number
-                projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cursor) {
-                    pageInfo { endCursor hasNextPage }
-                    nodes {
-                        id
-                        column {
+try:
+    result = bot.graphql(
+        """
+        query($id:ID!, $cursor:String) {
+            node(id:$id) {
+                ... on PullRequest {
+                    number
+                    projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cursor) {
+                        pageInfo { endCursor hasNextPage }
+                        nodes {
                             id
-                            name
-                            project {
+                            column {
                                 id
                                 name
+                                project {
+                                    id
+                                    name
+                                }
                             }
                         }
                     }
                 }
-            }
-            ... on Issue {
-                number
-                projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cursor) {
-                    pageInfo { endCursor hasNextPage }
-                    nodes {
-                        id
-                        column {
+                ... on Issue {
+                    number
+                    projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cursor) {
+                        pageInfo { endCursor hasNextPage }
+                        nodes {
                             id
-                            name
-                            project {
+                            column {
                                 id
                                 name
+                                project {
+                                    id
+                                    name
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
-    """,
-    id=id,
-    cursors={
-        'cursor': ["node", "projectCards"]
-    },
-)
+        """,
+        id=id,
+        cursors={
+            'cursor': ["node", "projectCards"]
+        },
+    )
+except bot.TokenError as e:
+    print(e.error)
+    sys.exit(0)
 
 cards = result["node"]["projectCards"]["nodes"]
 projects = {card["column"]["project"]["id"] for card in cards}

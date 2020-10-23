@@ -28,65 +28,69 @@ else:
 
 
 # Find out what projects the issue/PR is in, as well as their assignees.
-result = bot.graphql(
-    """
-    query($id:ID!, $cardCursor:String, $assigneeCursor:String) {
-        node(id:$id) {
-            ... on PullRequest {
-                number
-                assignees(first:100, after:$assigneeCursor) {
-                    pageInfo { endCursor hasNextPage }
-                    nodes {
-                        login
+try:
+    result = bot.graphql(
+        """
+        query($id:ID!, $cardCursor:String, $assigneeCursor:String) {
+            node(id:$id) {
+                ... on PullRequest {
+                    number
+                    assignees(first:100, after:$assigneeCursor) {
+                        pageInfo { endCursor hasNextPage }
+                        nodes {
+                            login
+                        }
                     }
-                }
-                projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cardCursor) {
-                    pageInfo { endCursor hasNextPage }
-                    nodes {
-                        id
-                        column {
+                    projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cardCursor) {
+                        pageInfo { endCursor hasNextPage }
+                        nodes {
                             id
-                            name
-                            project {
+                            column {
                                 id
                                 name
+                                project {
+                                    id
+                                    name
+                                }
                             }
                         }
                     }
                 }
-            }
-            ... on Issue {
-                number
-                assignees(first:100, after:$assigneeCursor) {
-                    pageInfo { endCursor hasNextPage }
-                    nodes {
-                        login
+                ... on Issue {
+                    number
+                    assignees(first:100, after:$assigneeCursor) {
+                        pageInfo { endCursor hasNextPage }
+                        nodes {
+                            login
+                        }
                     }
-                }
-                projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cardCursor) {
-                    pageInfo { endCursor hasNextPage }
-                    nodes {
-                        id
-                        column {
+                    projectCards(first:100, archivedStates:NOT_ARCHIVED, after:$cardCursor) {
+                        pageInfo { endCursor hasNextPage }
+                        nodes {
                             id
-                            name
-                            project {
+                            column {
                                 id
                                 name
+                                project {
+                                    id
+                                    name
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
-    """,
-    id=id,
-    page={
-        "cardCursor": ["node", "projectCards"],
-        "assigneeCursor": ["node", "assignees"],
-    }
-)
+        """,
+        id=id,
+        page={
+            "cardCursor": ["node", "projectCards"],
+            "assigneeCursor": ["node", "assignees"],
+        }
+    )
+except bot.TokenError as e:
+    print(e.error)
+    sys.exit(0)
 
 # Construct lists of assignees, projects, and columns.
 assignees = result["node"]["assignees"]["nodes"]

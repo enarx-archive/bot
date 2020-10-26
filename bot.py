@@ -108,7 +108,7 @@ def graphql(query, cursors=None, prev_path=None, **kwargs):
     token = os.environ.get('BOT_TOKEN', None)
     headers = {}
 
-    if token is not None:
+    if token is not None and len(token) > 0:
         headers["Authorization"] = f"token {token}"
     else:
         raise TokenError(error="""

@@ -120,13 +120,18 @@ if len(assignees) > 0 and bot.PROJECTS["Sprint"] not in columns.keys():
 
 # If this issue/PR needs to be moved, move it.
 if input is not None:
-    bot.graphql(
-        """
-        mutation($input:AddProjectCardInput!) {
-            addProjectCard(input:$input) {
-                clientMutationId
+    try:
+        bot.graphql(
+            """
+            mutation($input:AddProjectCardInput!) {
+                addProjectCard(input:$input) {
+                    clientMutationId
+                }
             }
-        }
-        """,
-        input=input
-    )
+            """,
+            input=input
+        )
+    except bot.GraphQLError as e:
+        if e["message"] != "Project already has the associated issue":
+            raise
+        print(f"Project already has this card. Skipping addition.")

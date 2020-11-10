@@ -10,4 +10,4 @@ jobs:
     - name: checkout
       uses: actions/checkout@v2
     - name: post-sprint-cleanup
-      run: enarxbot-post-sprint-cleanup
+      run: $GITHUB_WORKSPACE/enarxbot-post-sprint-cleanup

@@ -6,6 +6,8 @@ on:
 jobs:
   manual:
     runs-on: ubuntu-latest
+    env:
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
     steps:
     - name: checkout
       uses: actions/checkout@v2

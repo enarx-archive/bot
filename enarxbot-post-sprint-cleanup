@@ -89,11 +89,11 @@ except bot.TokenError as e:
 
 # Create sets of issue IDs that are in each column. Also create lookup tables
 # for corresponding card IDs for API actions.
-planning_content = {c['content']['id'] for c in result['planning']['cards']['nodes']}
-planning_content_cards = {c['content']['id']: c['id'] for c in result['planning']['cards']['nodes']}
+planning_content = {c['content']['id'] for c in result['planning']['cards']['nodes'] if c['content'].get('id', None) is not None}
+planning_content_cards = {c['content']['id']: c['id'] for c in result['planning']['cards']['nodes'] if c['content'].get('id', None) is not None}
 
-sprint_content = {c['content']['id'] for c in result['sprint']['cards']['nodes']}
-sprint_content_cards = {c['content']['id']: c['id'] for c in result['sprint']['cards']['nodes']}
+sprint_content = {c['content']['id'] for c in result['sprint']['cards']['nodes'] if c['content'].get('id', None) is not None}
+sprint_content_cards = {c['content']['id']: c['id'] for c in result['sprint']['cards']['nodes'] if c['content'].get('id', None) is not None}
 
 for content in sprint_content:
     # If the issue is already present in an existing card on the Planning

@@ -12,14 +12,6 @@ runs:
       shell: bash
     - run: echo " --- ASSIGNED --- " && $GITHUB_ACTION_PATH/enarxbot-assigned
       shell: bash
-    - run: echo " --- COPY-LABELS-LINKED --- " && $GITHUB_ACTION_PATH/enarxbot-copy-labels-linked
-      shell: bash
-    - run: echo " --- PR-MERGE --- " && $GITHUB_ACTION_PATH/enarxbot-pr-merge
-      shell: bash
-    - run: echo " --- PR-REQUEST --- " && $GITHUB_ACTION_PATH/enarxbot-pr-request
-      shell: bash
-    - run: echo " --- PR-ASSIGN --- " && $GITHUB_ACTION_PATH/enarxbot-pr-assign
-      shell: bash
     - run: bash -c "env | sort"
       shell: bash
     - run: cat $GITHUB_EVENT_PATH

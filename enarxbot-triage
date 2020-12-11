@@ -82,16 +82,21 @@ if bot.PROJECTS["Planning"] not in projects:
     print(f"Adding {owner}/{repo}#{result['node']['number']} to Planning board")
 
     # Add the content to the project.
-    bot.graphql(
-        """
-        mutation($input:AddProjectCardInput!) {
-            addProjectCard(input:$input) {
-                clientMutationId
+    try:
+        bot.graphql(
+            """
+            mutation($input:AddProjectCardInput!) {
+                addProjectCard(input:$input) {
+                    clientMutationId
+                }
             }
-        }
-        """,
-        input={
-            "projectColumnId": bot.COLUMNS["Planning"]["Triage"],
-            "contentId": id
-        }
-    )
+            """,
+            input={
+                "projectColumnId": bot.COLUMNS["Planning"]["Triage"],
+                "contentId": id
+            }
+        )
+    except bot.GraphQLError as e:
+        if e.errors[0]["message"] != "Project already has the associated issue":
+            raise
+        print(f"Project already has this card. Skipping addition.")

@@ -132,6 +132,6 @@ if input is not None:
             input=input
         )
     except bot.GraphQLError as e:
-        if e["message"] != "Project already has the associated issue":
+        if e.errors[0]["message"] != "Project already has the associated issue":
             raise
         print(f"Project already has this card. Skipping addition.")

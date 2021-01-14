@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # SPDX-License-Identifier: Apache-2.0
 
-import bot
+from githubgql import githubgql
 
 import json
 import sys
@@ -29,7 +29,7 @@ else:
 
 # Find out what projects the issue/PR is in, as well as their assignees.
 try:
-    result = bot.graphql(
+    result = githubgql.graphql(
         """
         query($id:ID!, $cardCursor:String, $assigneeCursor:String) {
             node(id:$id) {
@@ -88,7 +88,7 @@ try:
             "assigneeCursor": ["node", "assignees"],
         }
     )
-except bot.TokenError as e:
+except githubgql.TokenError as e:
     print(e.error)
     sys.exit(0)
 
@@ -99,14 +99,14 @@ columns = {card["column"]["project"]["id"]: card["column"]["name"] for card in c
 
 input = None
 
-if len(assignees) > 0 and bot.PROJECTS["Sprint"] not in columns.keys():
+if len(assignees) > 0 and githubgql.PROJECTS["Sprint"] not in columns.keys():
     # Issues must additionally be present in the "Assigned" column of the
     # Planning board to be moved.
-    if id_type == "issue" and columns.get(bot.PROJECTS["Planning"]) == "Assigned":
+    if id_type == "issue" and columns.get(githubgql.PROJECTS["Planning"]) == "Assigned":
         # Print status.
         print(f"Moving issue {owner}/{repo}#{result['node']['number']} to Sprint board")
         input = {
-            "projectColumnId": bot.COLUMNS["Sprint"]["Assigned"],
+            "projectColumnId": githubgql.COLUMNS["Sprint"]["Assigned"],
             "contentId": id
         }
 
@@ -114,14 +114,14 @@ if len(assignees) > 0 and bot.PROJECTS["Sprint"] not in columns.keys():
         # Print status.
         print(f"Moving PR {owner}/{repo}#{result['node']['number']} to Sprint board")
         input = {
-            "projectColumnId": bot.COLUMNS["Sprint"]["Reviewing"],
+            "projectColumnId": githubgql.COLUMNS["Sprint"]["Reviewing"],
             "contentId": id
         }
 
 # If this issue/PR needs to be moved, move it.
 if input is not None:
     try:
-        bot.graphql(
+        githubgql.graphql(
             """
             mutation($input:AddProjectCardInput!) {
                 addProjectCard(input:$input) {
@@ -131,7 +131,7 @@ if input is not None:
             """,
             input=input
         )
-    except bot.GraphQLError as e:
+    except githubgql.GraphQLError as e:
         if e.errors[0]["message"] != "Project already has the associated issue":
             raise
         print(f"Project already has this card. Skipping addition.")

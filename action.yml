@@ -8,6 +8,10 @@ branding:
 runs:
   using: "composite"
   steps:
+    - run: python3 -m pip install -qqq --upgrade pip
+      shell: bash
+    - run: python3 -m pip install -qqq githubgql
+      shell: bash
     - run: echo " --- TRIAGE --- " && $GITHUB_ACTION_PATH/enarxbot-triage
       shell: bash
     - run: echo " --- ASSIGNED --- " && $GITHUB_ACTION_PATH/enarxbot-assigned

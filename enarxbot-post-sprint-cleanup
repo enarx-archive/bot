@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # SPDX-License-Identifier: Apache-2.0
 
-import bot
+from githubgql import githubgql
 
 import json
 import sys
@@ -77,13 +77,13 @@ if os.environ["GITHUB_EVENT_NAME"] != "workflow_dispatch":
 
 # Query all cards in two columns: the assigned columns of both Planning and Sprint.
 try:
-    result = bot.graphql(
+    result = githubgql.graphql(
         QUERY,
-        planningColumnId=bot.COLUMNS['Planning']['Assigned'],
-        sprintColumnId=bot.COLUMNS['Sprint']['Assigned'],
+        planningColumnId=githubgql.COLUMNS['Planning']['Assigned'],
+        sprintColumnId=githubgql.COLUMNS['Sprint']['Assigned'],
         cursors=QUERY_CURSORS
     )
-except bot.TokenError as e:
+except githubgql.TokenError as e:
     print(e.error)
     sys.exit(0)
 
@@ -99,24 +99,24 @@ for content in sprint_content:
     # If the issue is already present in an existing card on the Planning
     # board, move that card. If not, create a new card.
     if content in planning_content:
-        bot.graphql(
+        githubgql.graphql(
             MOVE_CARD_MUTATION,
             input={
-                "columnId": bot.COLUMNS["Planning"]["Nominated"],
+                "columnId": githubgql.COLUMNS["Planning"]["Nominated"],
                 "cardId": planning_content_cards[content]
             }
         )
     else:
-        bot.graphql(
+        githubgql.graphql(
             ADD_CARD_MUTATION,
             input={
-                "projectColumnId": bot.COLUMNS["Planning"]["Nominated"],
+                "projectColumnId": githubgql.COLUMNS["Planning"]["Nominated"],
                 "contentId": content
             }
         )
 
     # Once done moving/creating cards, delete the issue from the Sprint board.
-    bot.graphql(
+    githubgql.graphql(
         DELETE_CARD_MUTATION,
         input={
             "cardId": sprint_content_cards[content]

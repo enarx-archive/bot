@@ -3,6 +3,7 @@
 
 from githubgql import githubgql
 
+import constants
 import json
 import sys
 import os
@@ -77,7 +78,7 @@ cards = result["node"]["projectCards"]["nodes"]
 projects = {card["column"]["project"]["id"] for card in cards}
 
 # If the issue/PR isn't in the Planning project, add it to Triage.
-if githubgql.PROJECTS["Planning"] not in projects:
+if constants.PROJECTS["Planning"] not in projects:
     # Print status.
     print(f"Adding {owner}/{repo}#{result['node']['number']} to Planning board")
 
@@ -92,7 +93,7 @@ if githubgql.PROJECTS["Planning"] not in projects:
             }
             """,
             input={
-                "projectColumnId": githubgql.COLUMNS["Planning"]["Triage"],
+                "projectColumnId": constants.COLUMNS["Planning"]["Triage"],
                 "contentId": id
             }
         )

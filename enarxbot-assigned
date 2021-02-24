@@ -3,6 +3,7 @@
 
 from githubgql import githubgql
 
+import constants
 import json
 import sys
 import os
@@ -99,14 +100,14 @@ columns = {card["column"]["project"]["id"]: card["column"]["name"] for card in c
 
 input = None
 
-if len(assignees) > 0 and githubgql.PROJECTS["Sprint"] not in columns.keys():
+if len(assignees) > 0 and constants.PROJECTS["Sprint"] not in columns.keys():
     # Issues must additionally be present in the "Assigned" column of the
     # Planning board to be moved.
-    if id_type == "issue" and columns.get(githubgql.PROJECTS["Planning"]) == "Assigned":
+    if id_type == "issue" and columns.get(constants.PROJECTS["Planning"]) == "Assigned":
         # Print status.
         print(f"Moving issue {owner}/{repo}#{result['node']['number']} to Sprint board")
         input = {
-            "projectColumnId": githubgql.COLUMNS["Sprint"]["Assigned"],
+            "projectColumnId": constants.COLUMNS["Sprint"]["Assigned"],
             "contentId": id
         }
 
@@ -114,7 +115,7 @@ if len(assignees) > 0 and githubgql.PROJECTS["Sprint"] not in columns.keys():
         # Print status.
         print(f"Moving PR {owner}/{repo}#{result['node']['number']} to Sprint board")
         input = {
-            "projectColumnId": githubgql.COLUMNS["Sprint"]["Reviewing"],
+            "projectColumnId": constants.COLUMNS["Sprint"]["Reviewing"],
             "contentId": id
         }
 

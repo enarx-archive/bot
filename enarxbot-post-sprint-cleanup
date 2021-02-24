@@ -3,6 +3,7 @@
 
 from githubgql import githubgql
 
+import constants
 import json
 import sys
 import os
@@ -79,8 +80,8 @@ if os.environ["GITHUB_EVENT_NAME"] != "workflow_dispatch":
 try:
     result = githubgql.graphql(
         QUERY,
-        planningColumnId=githubgql.COLUMNS['Planning']['Assigned'],
-        sprintColumnId=githubgql.COLUMNS['Sprint']['Assigned'],
+        planningColumnId=constants.COLUMNS['Planning']['Assigned'],
+        sprintColumnId=constants.COLUMNS['Sprint']['Assigned'],
         cursors=QUERY_CURSORS
     )
 except githubgql.TokenError as e:
@@ -102,7 +103,7 @@ for content in sprint_content:
         githubgql.graphql(
             MOVE_CARD_MUTATION,
             input={
-                "columnId": githubgql.COLUMNS["Planning"]["Nominated"],
+                "columnId": constants.COLUMNS["Planning"]["Nominated"],
                 "cardId": planning_content_cards[content]
             }
         )
@@ -110,7 +111,7 @@ for content in sprint_content:
         githubgql.graphql(
             ADD_CARD_MUTATION,
             input={
-                "projectColumnId": githubgql.COLUMNS["Planning"]["Nominated"],
+                "projectColumnId": constants.COLUMNS["Planning"]["Nominated"],
                 "contentId": content
             }
         )
